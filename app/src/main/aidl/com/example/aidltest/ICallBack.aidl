@@ -10,5 +10,5 @@ interface ICallBack {
      */
 //    void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat,
 //            double aDouble, String aString);
-    void onReceived(int code,String msg);
+    void onReceived(String cmd,int code,String content);
 }

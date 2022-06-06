@@ -22,6 +22,22 @@ class SecondActivity : AppCompatActivity() {
         findViewById(R.id.testBtn_connect)
     }
 
+    val postBtn by lazy<Button> {
+        findViewById(R.id.testBtn_post)
+    }
+
+    val eventbusBtn by lazy<Button>{
+        findViewById(R.id.testBtn_eventbus)
+    }
+
+    val registerBtn by lazy<Button> {
+        findViewById(R.id.testBtn_regist)
+    }
+
+    val unregisterBtn by lazy<Button> {
+        findViewById(R.id.testBtn_unregist)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_second)
@@ -29,11 +45,46 @@ class SecondActivity : AppCompatActivity() {
             this.finish()
         }
         connectBtn.setOnClickListener {
-            connect()
+            val intent = Intent(this,CatService::class.java)
+            bindService(intent,catConnection, Service.BIND_AUTO_CREATE)
+        }
+        eventbusBtn.setOnClickListener {
+            val intent = Intent(this,EventService::class.java)
+            bindService(intent,eventConnection,Service.BIND_AUTO_CREATE)
+        }
+        postBtn.setOnClickListener {
+            eventSS?.post("testCmd","发送的内容")
+        }
+        unregisterBtn.setOnClickListener {
+            eventSS?.unRegister("testCmd")
+        }
+        registerBtn.setOnClickListener {
+            eventSS?.register("testCmd",recieve)
         }
     }
 
-    private val connection = object : ServiceConnection{
+    private var eventSS:IEventBus? = null
+    private var recieve = object:ICallBack.Stub(){
+        override fun onReceived(cmd: String?, code: Int, content: String?) {
+            Log.i(TAG,"收到了recived cmd:"+cmd+",code:"+code+",content:"+content)
+        }
+    }
+
+    private val eventConnection = object : ServiceConnection{
+        override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
+            Log.i(TAG,"event onServiceConnected")
+            eventSS = IEventBus.Stub.asInterface(p1)
+//            eventSS!!.register("testCmd",recieve)
+        }
+
+        override fun onServiceDisconnected(p0: ComponentName?) {
+            Log.i(TAG,"event onServiceDisconnected")
+            eventSS = null
+        }
+
+    }
+
+    private val catConnection = object : ServiceConnection{
         override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
             Log.i(TAG,"onServiceConnected")
             var cat = ICat.Stub.asInterface(p1)
@@ -43,11 +94,11 @@ class SecondActivity : AppCompatActivity() {
                 Log.i(TAG,"color:"+color)
                 Log.i(TAG,"weight:"+weight)
                 cat.getMsg(3,object: ICallBack.Stub() {
-                    override fun onReceived(code: Int, msg: String?) {
-                        Log.i(TAG,"mBinder cat received, code:"+code+",msg:"+msg)
+
+                    override fun onReceived(cmd: String?, code: Int, content: String?) {
+                        Log.i(TAG,"mBinder cat received, code:"+code+",msg:"+content)
                     }
                 })
-//                cat.getMsg(3,mBinder)
             }catch (ex : Exception){
                 ex.printStackTrace()
             }
@@ -59,14 +110,4 @@ class SecondActivity : AppCompatActivity() {
 
     }
 
-    val mBinder = object:ICallBack.Stub(){
-        override fun onReceived(code: Int, msg: String?) {
-            Log.i(TAG,"mBinder received, code:"+code+",msg:"+msg)
-        }
-    }
-
-    fun connect(){
-        val intent = Intent(this,CatService::class.java)
-        bindService(intent,connection, Service.BIND_AUTO_CREATE)
-    }
 }
