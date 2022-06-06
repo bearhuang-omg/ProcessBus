@@ -27,6 +27,14 @@
              </intent-filter>
         </activity>
 
+        <activity android:name=".ThirdActivity"
+                android:exported="true"
+                android:process=":remote2">
+            <intent-filter>
+                <action android:name="android.intent.action.second"></action>
+            </intent-filter>
+        </activity>
+
 
     </application>
 

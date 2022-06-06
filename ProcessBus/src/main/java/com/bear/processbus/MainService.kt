@@ -28,7 +28,6 @@ class MainService : Service() {
                 eventManager[event.cmd]?.onReceived(SUCCESS, event)
             }
         }
-
     }
 
     override fun onBind(p0: Intent?): IBinder? {
