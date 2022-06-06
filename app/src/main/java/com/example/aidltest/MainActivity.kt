@@ -14,7 +14,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         var testBtn:Button = findViewById(R.id.testBtn)
         testBtn.setOnClickListener {
-//            Toast.makeText(this,"click",Toast.LENGTH_SHORT).show()
             var intent = Intent(this,SecondActivity::class.java)
             startActivity(intent)
         }

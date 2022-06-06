@@ -27,14 +27,6 @@
              </intent-filter>
         </activity>
 
-        <service android:name=".CatService"
-                android:exported="true">
-            <intent-filter>
-                <action android:name="com.tencent.bearhuang.test"/>
-            </intent-filter>
-        </service>
-
-        <service android:name=".EventService"/>
 
     </application>
 

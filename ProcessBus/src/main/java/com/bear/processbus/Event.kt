@@ -1,4 +1,4 @@
-package com.example.aidltest
+package com.bear.processbus
 
 import android.os.Parcel
 import android.os.Parcelable
