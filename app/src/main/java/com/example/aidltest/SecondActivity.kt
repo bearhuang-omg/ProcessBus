@@ -42,6 +42,12 @@ class SecondActivity : AppCompatActivity() {
                 val weight = cat.getWeight(2)
                 Log.i(TAG,"color:"+color)
                 Log.i(TAG,"weight:"+weight)
+                cat.getMsg(3,object: ICallBack.Stub() {
+                    override fun onReceived(code: Int, msg: String?) {
+                        Log.i(TAG,"mBinder cat received, code:"+code+",msg:"+msg)
+                    }
+                })
+//                cat.getMsg(3,mBinder)
             }catch (ex : Exception){
                 ex.printStackTrace()
             }
@@ -51,6 +57,12 @@ class SecondActivity : AppCompatActivity() {
             Log.i(TAG,"onServiceDisconnected")
         }
 
+    }
+
+    val mBinder = object:ICallBack.Stub(){
+        override fun onReceived(code: Int, msg: String?) {
+            Log.i(TAG,"mBinder received, code:"+code+",msg:"+msg)
+        }
     }
 
     fun connect(){
