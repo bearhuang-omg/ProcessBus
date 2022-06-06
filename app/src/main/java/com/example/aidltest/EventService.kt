@@ -23,9 +23,9 @@ class EventService : Service() {
             }
         }
 
-        override fun post(cmd: String?, content: String?) {
-            if (cmd != null) {
-                eventManager[cmd]?.onReceived(cmd, SUCCESS, content)
+        override fun post(event: Event?) {
+            if (event != null){
+                eventManager[event.cmd]?.onReceived(SUCCESS,event)
             }
         }
 

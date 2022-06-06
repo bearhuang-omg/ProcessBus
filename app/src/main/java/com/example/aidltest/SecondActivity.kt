@@ -53,7 +53,8 @@ class SecondActivity : AppCompatActivity() {
             bindService(intent,eventConnection,Service.BIND_AUTO_CREATE)
         }
         postBtn.setOnClickListener {
-            eventSS?.post("testCmd","发送的内容")
+            val event = Event("testCmd","event是发送的内容")
+            eventSS?.post(event)
         }
         unregisterBtn.setOnClickListener {
             eventSS?.unRegister("testCmd")
@@ -65,8 +66,8 @@ class SecondActivity : AppCompatActivity() {
 
     private var eventSS:IEventBus? = null
     private var recieve = object:ICallBack.Stub(){
-        override fun onReceived(cmd: String?, code: Int, content: String?) {
-            Log.i(TAG,"收到了recived cmd:"+cmd+",code:"+code+",content:"+content)
+        override fun onReceived(code: Int, event: Event?) {
+            Log.i(TAG,"收到了recived cmd:"+event?.cmd+",code:"+code+",content:"+event?.content)
         }
     }
 
@@ -93,12 +94,6 @@ class SecondActivity : AppCompatActivity() {
                 val weight = cat.getWeight(2)
                 Log.i(TAG,"color:"+color)
                 Log.i(TAG,"weight:"+weight)
-                cat.getMsg(3,object: ICallBack.Stub() {
-
-                    override fun onReceived(cmd: String?, code: Int, content: String?) {
-                        Log.i(TAG,"mBinder cat received, code:"+code+",msg:"+content)
-                    }
-                })
             }catch (ex : Exception){
                 ex.printStackTrace()
             }

@@ -49,8 +49,8 @@ class CatService : Service() {
         }
 
         override fun getMsg(id: Int, callback: ICallBack?) {
-            Log.i(TAG,"收到了getMsg,id:"+id)
-            callback?.onReceived("",10,"返回会去的msg")
+//            Log.i(TAG,"收到了getMsg,id:"+id)
+//            callback?.onReceived("",10,"返回会去的msg")
         }
 
     }

@@ -1,6 +1,7 @@
 // IEventBus.aidl
 package com.example.aidltest;
 import com.example.aidltest.ICallBack;
+import com.example.aidltest.Event;
 
 // Declare any non-default types here with import statements
 
@@ -11,5 +12,5 @@ interface IEventBus {
      */
     void register(String cmd,ICallBack callback);
     void unRegister(String cmd);
-    void post(String cmd,String content);
+    void post(in Event event);
 }
