@@ -6,12 +6,13 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.Handler
+import android.os.HandlerThread
 import android.os.IBinder
 import android.util.Log
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
-import java.util.concurrent.ConcurrentHashMap
 
 object Bus {
 
@@ -20,12 +21,29 @@ object Bus {
     private var isConnected = false
     private var eventSS: IEventBus? = null
     private var context: Context? = null
-    private val callbackMap = ConcurrentHashMap<String, ArrayList<() -> Unit>>()
+    private val callbackMap = HashMap<String, ArrayList<() -> Unit>>()
+    private val handlerThread = HandlerThread(TAG)
+    private val handler:Handler by lazy {
+        handlerThread.start()
+        Handler(handlerThread.looper)
+    }
 
     public fun init(context: Context) {
         if (!isInit) {
-            this.context = context.applicationContext
-            this.isInit = true
+            innerInit(context)
+        }
+    }
+
+    private fun innerInit(context: Context? = null) {
+        if (!isInit) {
+            synchronized(Bus::class.java) {
+                if (!isInit) {
+                    if (context != null) {
+                        this.context = context
+                    }
+                    isInit = true
+                }
+            }
         }
     }
 
@@ -33,13 +51,16 @@ object Bus {
         if (event == null || event.cmd.isEmpty()) {
             return
         }
-        if (eventSS != null) {
-            eventSS!!.post(event)
-        } else {
-            addCallBack(event.cmd) {
+        innerInit()
+        handler.post {
+            if (eventSS != null) {
                 eventSS!!.post(event)
+            } else {
+                addCallBack(event.cmd) {
+                    eventSS!!.post(event)
+                }
+                bindService()
             }
-            bindService()
         }
     }
 
@@ -48,13 +69,16 @@ object Bus {
         if (cmd.isEmpty() || block == null) {
             return null
         }
-        if (eventSS != null) {
-            realRegister(cmd, block)
-        } else {
-            addCallBack(cmd) {
+        innerInit()
+        handler.post {
+            if (eventSS != null) {
                 realRegister(cmd, block)
+            } else {
+                addCallBack(cmd) {
+                    realRegister(cmd, block)
+                }
+                bindService()
             }
-            bindService()
         }
         return Releasable(cmd)
     }
@@ -62,7 +86,7 @@ object Bus {
     private fun realRegister(cmd: String, block: (Event) -> Unit) {
         Log.i(TAG, "register cmd:" + cmd)
         eventSS?.register(cmd, object : ICallBack.Stub() {
-            override fun onReceived(code: Int, event: Event?) {
+            override fun onReceived(event: Event?) {
                 if (event != null) {
                     block(event)
                 }
@@ -76,8 +100,11 @@ object Bus {
             return
         }
         Log.i(TAG, "unregister cmd:" + cmd)
-        removeCallBack(cmd)
-        eventSS?.unRegister(cmd)
+        innerInit()
+        handler.post {
+            removeCallBack(cmd)
+            eventSS?.unRegister(cmd)
+        }
     }
 
     private fun bindService() {
