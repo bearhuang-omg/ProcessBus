@@ -1,17 +1,16 @@
 package com.example.aidltest
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
 import com.bear.processbus.Bus
-import com.bear.processbus.BusListener
 import com.bear.processbus.Event
 
 class SecondActivity : AppCompatActivity() {
 
-    val TAG = "SecondActivity"
+    val TAG = "ProcessSecondActivity"
 
     val testBtn by lazy<Button> {
         findViewById(R.id.testBtn_back)
@@ -57,11 +56,9 @@ class SecondActivity : AppCompatActivity() {
             Bus.unRegister("testCmd")
         }
         registerBtn.setOnClickListener {
-            Bus.register("testCmd",object:BusListener{
-                override fun onEvent(event: Event) {
-                    Log.i(TAG,"收到了："+event.cmd+","+event.content)
-                }
-            })?.autoRelease(this.lifecycle)
+            Bus.register("testCmd") { event ->
+                Log.i(TAG, "收到了：" + event.cmd + "," + event.content)
+            }?.autoRelease(this.lifecycle)
 
         }
     }
