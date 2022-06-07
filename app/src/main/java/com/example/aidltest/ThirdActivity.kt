@@ -22,7 +22,7 @@ class ThirdActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_third)
-        Bus.init(this)
+//        Bus.init(this)
         testBtnFinish.setOnClickListener {
             this.finish()
         }

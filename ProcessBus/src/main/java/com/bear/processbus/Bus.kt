@@ -1,5 +1,6 @@
 package com.bear.processbus
 
+import android.app.Application
 import android.app.Service
 import android.content.ComponentName
 import android.content.Context
@@ -16,12 +17,14 @@ object Bus {
     private var context: Context? = null
 
     public fun init(context: Context) {
-        this.context = context
-        this.isInit = true
+        if (!isInit) {
+            this.context = context.applicationContext
+            this.isInit = true
+        }
     }
 
     public fun post(event: Event) {
-        if (!isInit || event == null) {
+        if (event == null) {
             return
         }
         bindService()
@@ -29,7 +32,7 @@ object Bus {
     }
 
     public fun register(cmd: String, listener: BusListener) {
-        if (!isInit || cmd == null || listener == null) {
+        if (cmd == null || listener == null) {
             return
         }
         bindService()
@@ -43,14 +46,20 @@ object Bus {
     }
 
     public fun unRegister(cmd: String) {
-        if (!isInit || cmd == null) {
+        if (cmd == null) {
             return
         }
         eventSS?.unRegister(cmd)
     }
 
     private fun bindService() {
-        if (eventSS != null || !isInit) {
+        if (eventSS != null) {
+            return
+        }
+        if (context == null) {
+            getContext()
+        }
+        if (context == null) {
             return
         }
         val intent = Intent(context, com.bear.processbus.MainService::class.java)
@@ -68,5 +77,17 @@ object Bus {
             eventSS = null
         }
 
+    }
+
+    private fun getContext() {
+        try {
+            if (context == null) {
+                context =
+                    Class.forName("android.app.ActivityThread").getMethod("currentApplication")
+                        .invoke(null) as Application
+            }
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        }
     }
 }

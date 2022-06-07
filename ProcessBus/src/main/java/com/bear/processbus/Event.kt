@@ -19,7 +19,7 @@ class Event(var cmd: String, var content: String) : Parcelable {
         return 0
     }
 
-    fun readFromParcel(source:Parcel){
+    fun readFromParcel(source: Parcel) {
         cmd = source.readString()!!
         content = source.readString()!!
     }

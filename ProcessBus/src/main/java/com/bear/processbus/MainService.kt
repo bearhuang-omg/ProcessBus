@@ -3,10 +3,11 @@ package com.bear.processbus
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import java.util.concurrent.ConcurrentHashMap
 
 class MainService : Service() {
 
-    private val eventManager = HashMap<String, ICallBack>()
+    private val eventManager = ConcurrentHashMap<String, ICallBack>()
 
     public val SUCCESS = 1
 

@@ -48,7 +48,7 @@ class SecondActivity : AppCompatActivity() {
             startActivity(intent)
         }
         eventbusBtn.setOnClickListener {
-            Bus.init(this)
+//            Bus.init(this)
         }
         postBtn.setOnClickListener {
             Bus.post(Event("testCmd","新的内容"))
