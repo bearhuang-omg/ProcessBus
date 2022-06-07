@@ -16,8 +16,10 @@ object Bus {
 
     private val TAG = "ProcessBus"
     private var isInit = false
+    private var isConnected = false
     private var eventSS: IEventBus? = null
     private var context: Context? = null
+    private val callbackList = ArrayList<ConnectCallBack>()
 
     public fun init(context: Context) {
         if (!isInit) {
@@ -27,28 +29,47 @@ object Bus {
     }
 
     public fun post(event: Event) {
-        if (event == null) {
+        if (event == null || event.cmd.isEmpty()) {
             return
         }
-        bindService()
-        eventSS?.post(event)
+        if (eventSS != null) {
+            eventSS!!.post(event)
+        } else {
+            callbackList.add(object : ConnectCallBack {
+                override fun onConnected() {
+                    eventSS!!.post(event)
+                }
+            })
+            bindService()
+        }
     }
 
     public fun register(cmd: String, listener: BusListener): Releasable? {
-        if (cmd == null || listener == null) {
+        if (cmd.isEmpty() || listener == null) {
             return null
         }
-        bindService()
-        if (eventSS == null) {
-            return null
-        }
-        eventSS?.register(cmd, object : ICallBack.Stub() {
-            override fun onReceived(code: Int, event: Event?) {
-                if (event != null) {
-                    listener.onEvent(event)
+        if (eventSS != null) {
+            eventSS?.register(cmd, object : ICallBack.Stub() {
+                override fun onReceived(code: Int, event: Event?) {
+                    if (event != null) {
+                        listener.onEvent(event)
+                    }
                 }
-            }
-        })
+            })
+        } else {
+            callbackList.add(object :ConnectCallBack{
+                override fun onConnected() {
+                    eventSS?.register(cmd, object : ICallBack.Stub() {
+                        override fun onReceived(code: Int, event: Event?) {
+                            if (event != null) {
+                                listener.onEvent(event)
+                            }
+                        }
+                    })
+                }
+            })
+            bindService()
+        }
         return Releasable(cmd)
     }
 
@@ -76,16 +97,25 @@ object Bus {
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
             Log.i(TAG, "service connected")
+            isConnected = true
             eventSS = IEventBus.Stub.asInterface(p1)
+            if (callbackList.size > 0){
+                val iterator = callbackList.iterator()
+                while (iterator.hasNext()){
+                    iterator.next().onConnected()
+                }
+            }
         }
 
         override fun onServiceDisconnected(p0: ComponentName?) {
             Log.i(TAG, "service disConnected")
+            isConnected = false
             eventSS = null
         }
 
     }
 
+    //反射获取Application
     private fun getContext() {
         try {
             if (context == null) {
@@ -98,13 +128,19 @@ object Bus {
         }
     }
 
+    //连接上之后的回调
+    interface ConnectCallBack {
+        fun onConnected()
+    }
+
+    //自动释放
     class Releasable(val cmd: String) {
 
         public fun autoRelease(lifecycle: Lifecycle) {
             lifecycle.addObserver(object : LifecycleEventObserver {
                 override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
                     if (event == Lifecycle.Event.ON_DESTROY) {
-                        Log.i(TAG,"释放cmd:"+cmd)
+                        Log.i(TAG,"release cmd:"+cmd)
                         Bus.unRegister(cmd)
                     }
                 }
