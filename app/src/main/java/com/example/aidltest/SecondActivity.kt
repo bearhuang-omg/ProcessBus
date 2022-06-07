@@ -37,6 +37,8 @@ class SecondActivity : AppCompatActivity() {
         findViewById(R.id.testBtn_unregist)
     }
 
+    var key = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_second)
@@ -54,13 +56,13 @@ class SecondActivity : AppCompatActivity() {
             Bus.post(Event("testCmd","新的内容"))
         }
         unregisterBtn.setOnClickListener {
-            Bus.unRegister("testCmd")
+            Bus.unRegister(key)
         }
         registerBtn.setOnClickListener {
-            Bus.register("testCmd") { event ->
+            key = Bus.register("testCmd") { event ->
                 Log.i(TAG, "当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess} ")
-            }?.autoRelease(this.lifecycle)
-
+            }?.key!!
+           Log.i(TAG,"key = $key")
         }
     }
 

@@ -7,32 +7,41 @@ import android.util.Log
 
 class MainService : Service() {
 
-    private val eventManager = HashMap<String, ArrayList<ICallBack>>()
+    private val eventManager = HashMap<String, ArrayList<MainCallBack>>()
     private val TAG = "MainService"
     private val handler: Util.ProcessHandler by lazy {
         Util.getHandler(TAG)!!
     }
 
     private val mBinder = object : IEventBus.Stub() {
-        override fun register(cmd: String?, callback: ICallBack?) {
-            if (!cmd.isNullOrEmpty() && callback != null) {
+
+        override fun register(cmd: String?, key: String?, callback: ICallBack?) {
+            if (!cmd.isNullOrEmpty() && callback != null && !key.isNullOrEmpty()) {
                 Log.i(TAG, "register $cmd")
                 handler.post {
                     if (eventManager.contains(cmd)) {
-                        eventManager[cmd]?.add(callback)
+                        eventManager[cmd]?.add(MainCallBack(key,callback))
                     } else {
-                        val list = ArrayList<ICallBack>()
-                        list.add(callback)
+                        val list = ArrayList<MainCallBack>()
+                        list.add(MainCallBack(key,callback))
                         eventManager[cmd] = list
                     }
                 }
             }
         }
 
-        override fun unRegister(cmd: String?) {
-            Log.i(TAG, "unregister $cmd")
-            if (!cmd.isNullOrEmpty()) {
-                eventManager.remove(cmd)
+        override fun unRegister(key: String?) {
+            Log.i(TAG, "unregister $key")
+            handler.post {
+                if (!key.isNullOrEmpty()) {
+                    eventManager.forEach { entry ->
+                        entry.value.forEach { mainCallback ->
+                            if (mainCallback.key.equals(key)) {
+                                entry.value.remove(mainCallback)
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -40,12 +49,12 @@ class MainService : Service() {
             if (event != null && !event.cmd.isNullOrEmpty()) {
                 handler.post {
                     if (eventManager.contains(event.cmd) && eventManager[event.cmd] != null) {
-                        for (callback in eventManager[event.cmd]!!) {
+                        for (mainCallBack in eventManager[event.cmd]!!) {
                             try {
-                                callback.onReceived(event)
+                                mainCallBack.callback.onReceived(event)
                             } catch (ex: Exception) {
                                 ex.printStackTrace()
-                                eventManager[event.cmd]?.remove(callback)
+                                eventManager[event.cmd]?.remove(mainCallBack)
                                 if (eventManager[event.cmd] != null && eventManager[event.cmd]!!.isEmpty()) {
                                     eventManager.remove(event.cmd)
                                 }
@@ -83,4 +92,6 @@ class MainService : Service() {
         eventManager.clear()
         handler.quitSafely()
     }
+
+    class MainCallBack(val key:String,val callback:ICallBack)
 }

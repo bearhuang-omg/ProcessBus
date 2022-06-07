@@ -73,22 +73,26 @@ object Bus {
             return null
         }
         innerInit()
+        if (context == null) {
+            return null
+        }
+        val key = Util.getKey(context!!, cmd)
         handler.post {
             if (eventSS != null) {
-                realRegister(cmd, block)
+                realRegister(cmd, key, block)
             } else {
-                addCallBack(cmd) {
-                    realRegister(cmd, block)
+                addCallBack(key) {
+                    realRegister(cmd, key, block)
                 }
                 bindService()
             }
         }
-        return Releasable(cmd)
+        return Releasable(key)
     }
 
-    private fun realRegister(cmd: String, block: (Event) -> Unit) {
+    private fun realRegister(cmd: String, key: String, block: (Event) -> Unit) {
         Log.i(TAG, "register cmd:" + cmd)
-        eventSS?.register(cmd, object : ICallBack.Stub() {
+        eventSS?.register(cmd, key, object : ICallBack.Stub() {
             override fun onReceived(event: Event?) {
                 if (event != null) {
                     block(event)
@@ -98,15 +102,15 @@ object Bus {
     }
 
     //反注册
-    public fun unRegister(cmd: String) {
-        if (cmd.isEmpty()) {
+    public fun unRegister(key: String) {
+        if (key.isEmpty()) {
             return
         }
-        Log.i(TAG, "unregister cmd:" + cmd)
+        Log.i(TAG, "unregister key:" + key)
         innerInit()
         handler.post {
-            removeCallBack(cmd)
-            eventSS?.unRegister(cmd)
+            removeCallBack(key)
+            eventSS?.unRegister(key)
         }
     }
 
@@ -179,14 +183,14 @@ object Bus {
     }
 
     //自动释放
-    class Releasable(val cmd: String) {
+    class Releasable(val key: String) {
 
         public fun autoRelease(lifecycle: Lifecycle) {
             lifecycle.addObserver(object : LifecycleEventObserver {
                 override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
                     if (event == Lifecycle.Event.ON_DESTROY) {
-                        Log.i(TAG, "release cmd:" + cmd + ",event onDeStroy")
-                        unRegister(cmd)
+                        Log.i(TAG, "release ${key},event onDeStroy")
+                        unRegister(key)
                     }
                 }
             })

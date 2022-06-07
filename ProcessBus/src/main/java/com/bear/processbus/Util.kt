@@ -6,6 +6,9 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Process
 import android.util.Log
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
+import java.util.concurrent.atomic.AtomicInteger
 
 object Util {
 
@@ -39,11 +42,12 @@ object Util {
             for (appProcess in mActivityManager
                 .runningAppProcesses) {
                 if (appProcess.pid == pid) {
-                    currentProcessName = if (appProcess.processName == null || appProcess.processName.isEmpty()) {
-                        app.applicationInfo.packageName
-                    } else {
-                        appProcess.processName
-                    }
+                    currentProcessName =
+                        if (appProcess.processName == null || appProcess.processName.isEmpty()) {
+                            app.applicationInfo.packageName
+                        } else {
+                            appProcess.processName
+                        }
                     return currentProcessName
                 }
             }
@@ -77,9 +81,39 @@ object Util {
     }
 
     fun getHandler(tag: String): ProcessHandler? {
-        if (tag.isNullOrEmpty()){
+        if (tag.isNullOrEmpty()) {
             return null
         }
         return ProcessHandler(tag)
+    }
+
+    fun md5(text: String): String {
+        try {
+            //获取md5加密对象
+            val instance: MessageDigest = MessageDigest.getInstance("MD5")
+            //对字符串加密，返回字节数组
+            val digest: ByteArray = instance.digest(text.toByteArray())
+            var sb = StringBuffer()
+            for (b in digest) {
+                var i: Int = b.toInt() and 0xff
+                var hexString = Integer.toHexString(i)
+                if (hexString.length < 2) {
+                    hexString = "0" + hexString
+                }
+                sb.append(hexString)
+            }
+            return sb.toString()
+        } catch (e: NoSuchAlgorithmException) {
+            e.printStackTrace()
+        }
+        return ""
+    }
+
+    var count:AtomicInteger = AtomicInteger(0)
+
+    fun getKey(context: Context, cmd: String): String {
+        val current = count.getAndIncrement()
+//        return md5(getProcessName(context) + current) + "_" + cmd
+        return getProcessName(context) + current + "_" + cmd
     }
 }

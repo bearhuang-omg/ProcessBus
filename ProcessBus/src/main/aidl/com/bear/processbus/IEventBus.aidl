@@ -6,7 +6,7 @@ import com.bear.processbus.Event;
 
 interface IEventBus {
 
-    void register(String cmd,ICallBack callback);
-    void unRegister(String cmd);
+    void register(String cmd,String key,ICallBack callback);
+    void unRegister(String key);
     void post(in Event event);
 }

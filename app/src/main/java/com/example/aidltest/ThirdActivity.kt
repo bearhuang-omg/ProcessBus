@@ -32,7 +32,7 @@ class ThirdActivity : AppCompatActivity() {
 //        Bus.init(this)
         testBtnFinish.setOnClickListener {
             this.finish()
-            Process.killProcess(Process.myPid())
+//            Process.killProcess(Process.myPid())
         }
         connectBtnPost.setOnClickListener {
             Bus.post(Event("testCmd", "thirdActivity发出来的消息"))
@@ -43,7 +43,7 @@ class ThirdActivity : AppCompatActivity() {
                     TAG,
                     "当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess} "
                 )
-            }
+            }?.autoRelease(lifecycle)
         }
     }
 
