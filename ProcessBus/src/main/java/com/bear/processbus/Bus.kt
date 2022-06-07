@@ -8,6 +8,9 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 
 object Bus {
 
@@ -31,11 +34,14 @@ object Bus {
         eventSS?.post(event)
     }
 
-    public fun register(cmd: String, listener: BusListener) {
+    public fun register(cmd: String, listener: BusListener): Releasable? {
         if (cmd == null || listener == null) {
-            return
+            return null
         }
         bindService()
+        if (eventSS == null) {
+            return null
+        }
         eventSS?.register(cmd, object : ICallBack.Stub() {
             override fun onReceived(code: Int, event: Event?) {
                 if (event != null) {
@@ -43,6 +49,7 @@ object Bus {
                 }
             }
         })
+        return Releasable(cmd)
     }
 
     public fun unRegister(cmd: String) {
@@ -88,6 +95,20 @@ object Bus {
             }
         } catch (ex: Exception) {
             ex.printStackTrace()
+        }
+    }
+
+    class Releasable(val cmd: String) {
+
+        public fun autoRelease(lifecycle: Lifecycle) {
+            lifecycle.addObserver(object : LifecycleEventObserver {
+                override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+                    if (event == Lifecycle.Event.ON_DESTROY) {
+                        Log.i(TAG,"释放cmd:"+cmd)
+                        Bus.unRegister(cmd)
+                    }
+                }
+            })
         }
     }
 }

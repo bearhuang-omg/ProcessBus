@@ -61,7 +61,8 @@ class SecondActivity : AppCompatActivity() {
                 override fun onEvent(event: Event) {
                     Log.i(TAG,"收到了："+event.cmd+","+event.content)
                 }
-            })
+            })?.autoRelease(this.lifecycle)
+
         }
     }
 
