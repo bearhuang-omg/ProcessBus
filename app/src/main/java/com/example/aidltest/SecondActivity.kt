@@ -7,6 +7,7 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.bear.processbus.Bus
 import com.bear.processbus.Event
+import com.bear.processbus.Util
 
 class SecondActivity : AppCompatActivity() {
 
@@ -57,7 +58,7 @@ class SecondActivity : AppCompatActivity() {
         }
         registerBtn.setOnClickListener {
             Bus.register("testCmd") { event ->
-                Log.i(TAG, "收到了：" + event.cmd + "," + event.content)
+                Log.i(TAG, "当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess} ")
             }?.autoRelease(this.lifecycle)
 
         }

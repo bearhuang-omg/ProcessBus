@@ -6,8 +6,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.os.Handler
-import android.os.HandlerThread
 import android.os.IBinder
 import android.util.Log
 import androidx.lifecycle.Lifecycle
@@ -22,10 +20,8 @@ object Bus {
     private var eventSS: IEventBus? = null
     private var context: Context? = null
     private val callbackMap = HashMap<String, ArrayList<() -> Unit>>()
-    private val handlerThread = HandlerThread(TAG)
-    private val handler:Handler by lazy {
-        handlerThread.start()
-        Handler(handlerThread.looper)
+    private val handler: Util.ProcessHandler by lazy {
+        Util.getHandler(TAG)!!
     }
 
     public fun init(context: Context) {
@@ -40,6 +36,8 @@ object Bus {
                 if (!isInit) {
                     if (context != null) {
                         this.context = context
+                    } else {
+                        getContext()
                     }
                     isInit = true
                 }
@@ -53,6 +51,11 @@ object Bus {
         }
         innerInit()
         handler.post {
+            if (context == null) {
+                event.fromProcess = Util.DEFAULT_PROCESS_NAME
+            } else {
+                event.fromProcess = Util.getProcessName(context!!)
+            }
             if (eventSS != null) {
                 eventSS!!.post(event)
             } else {
@@ -182,11 +185,12 @@ object Bus {
             lifecycle.addObserver(object : LifecycleEventObserver {
                 override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
                     if (event == Lifecycle.Event.ON_DESTROY) {
-                        Log.i(TAG, "release cmd:" + cmd)
+                        Log.i(TAG, "release cmd:" + cmd + ",event onDeStroy")
                         unRegister(cmd)
                     }
                 }
             })
         }
     }
+
 }

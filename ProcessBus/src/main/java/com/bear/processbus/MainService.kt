@@ -2,8 +2,6 @@ package com.bear.processbus
 
 import android.app.Service
 import android.content.Intent
-import android.os.Handler
-import android.os.HandlerThread
 import android.os.IBinder
 import android.util.Log
 
@@ -11,15 +9,14 @@ class MainService : Service() {
 
     private val eventManager = HashMap<String, ArrayList<ICallBack>>()
     private val TAG = "MainService"
-    private val handlerThread = HandlerThread(TAG)
-    private val handler: Handler by lazy {
-        handlerThread.start()
-        Handler(handlerThread.looper)
+    private val handler: Util.ProcessHandler by lazy {
+        Util.getHandler(TAG)!!
     }
 
     private val mBinder = object : IEventBus.Stub() {
         override fun register(cmd: String?, callback: ICallBack?) {
             if (!cmd.isNullOrEmpty() && callback != null) {
+                Log.i(TAG, "register $cmd")
                 handler.post {
                     if (eventManager.contains(cmd)) {
                         eventManager[cmd]?.add(callback)
@@ -33,6 +30,7 @@ class MainService : Service() {
         }
 
         override fun unRegister(cmd: String?) {
+            Log.i(TAG, "unregister $cmd")
             if (!cmd.isNullOrEmpty()) {
                 eventManager.remove(cmd)
             }
@@ -43,7 +41,15 @@ class MainService : Service() {
                 handler.post {
                     if (eventManager.contains(event.cmd) && eventManager[event.cmd] != null) {
                         for (callback in eventManager[event.cmd]!!) {
-                            callback.onReceived(event)
+                            try {
+                                callback.onReceived(event)
+                            } catch (ex: Exception) {
+                                ex.printStackTrace()
+                                eventManager[event.cmd]?.remove(callback)
+                                if (eventManager[event.cmd] != null && eventManager[event.cmd]!!.isEmpty()) {
+                                    eventManager.remove(event.cmd)
+                                }
+                            }
                         }
                     }
                 }
@@ -52,7 +58,18 @@ class MainService : Service() {
     }
 
     override fun onBind(p0: Intent?): IBinder? {
+        Log.i(TAG, "onBind")
         return mBinder
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        return super.onUnbind(intent)
+        Log.i(TAG, "onUnbind")
+    }
+
+    override fun onRebind(intent: Intent?) {
+        super.onRebind(intent)
+        Log.i(TAG, "onRebind")
     }
 
     override fun onCreate() {
@@ -63,6 +80,7 @@ class MainService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.i(TAG, "main service destroyed")
-        handlerThread.quitSafely()
+        eventManager.clear()
+        handler.quitSafely()
     }
 }

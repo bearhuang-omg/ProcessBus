@@ -3,16 +3,19 @@ package com.bear.processbus
 import android.os.Parcel
 import android.os.Parcelable
 
-class Event(var cmd: String, var content: String) : Parcelable {
+class Event(var cmd: String, var content: String, var fromProcess: String = "") : Parcelable {
+
     constructor(parcel: Parcel) : this(
-        parcel.readString()!!,
-        parcel.readString()!!
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: ""
     ) {
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(cmd)
         parcel.writeString(content)
+        parcel.writeString(fromProcess)
     }
 
     override fun describeContents(): Int {
@@ -20,8 +23,9 @@ class Event(var cmd: String, var content: String) : Parcelable {
     }
 
     fun readFromParcel(source: Parcel) {
-        cmd = source.readString()!!
-        content = source.readString()!!
+        cmd = source.readString() ?: ""
+        content = source.readString() ?: ""
+        fromProcess = source.readString() ?: ""
     }
 
     companion object CREATOR : Parcelable.Creator<Event> {
