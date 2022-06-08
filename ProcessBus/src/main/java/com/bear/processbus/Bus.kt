@@ -19,7 +19,9 @@ object Bus {
     private var isConnected = false
     private var eventSS: IEventBus? = null
     private var context: Context? = null
-    private val callbackMap = HashMap<String, ArrayList<() -> Unit>>()
+    private val tempNotPost = ArrayList<() -> Unit>() //发送事件时，service可能还未连接，暂时存在eventCallBack里面
+    private val tempNotRegister = HashMap<String, () -> Unit>() //注册监听时，service可能还未连接，暂时存在regisetCallBack里面
+
     private val handler: Util.ProcessHandler by lazy {
         Util.getHandler(TAG)!!
     }
@@ -59,7 +61,7 @@ object Bus {
             if (eventSS != null) {
                 eventSS!!.post(event)
             } else {
-                addCallBack(event.cmd) {
+                tempNotPost.add {
                     eventSS!!.post(event)
                 }
                 bindService()
@@ -81,7 +83,7 @@ object Bus {
             if (eventSS != null) {
                 realRegister(cmd, key, block)
             } else {
-                addCallBack(key) {
+                tempNotRegister.put(key) {
                     realRegister(cmd, key, block)
                 }
                 bindService()
@@ -109,7 +111,7 @@ object Bus {
         Log.i(TAG, "unregister key:" + key)
         innerInit()
         handler.post {
-            removeCallBack(key)
+            tempNotRegister.remove(key)
             eventSS?.unRegister(key)
         }
     }
@@ -144,28 +146,18 @@ object Bus {
         }
     }
 
-    private fun addCallBack(cmd: String, block: () -> Unit) {
-        if (callbackMap.contains(cmd)) {
-            callbackMap[cmd]?.add(block)
-        } else {
-            val list = ArrayList<() -> Unit>()
-            list.add(block)
-            callbackMap[cmd] = list
-        }
-    }
-
-    private fun removeCallBack(cmd: String) {
-        callbackMap.remove(cmd)
-    }
-
     private fun runCallBack() {
-        if (!callbackMap.isEmpty()) {
-            callbackMap.forEach {
-                for (block in it.value) {
-                    block()
-                }
+        if (tempNotRegister.size > 0) {
+            tempNotRegister.forEach {
+                it.value()
             }
-            callbackMap.clear()
+            tempNotRegister.clear()
+        }
+        if (tempNotPost.size > 0) {
+            tempNotPost.forEach {
+                it()
+            }
+            tempNotPost.clear()
         }
     }
 
