@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.bear.processbus.Bus
 import com.bear.processbus.Event
@@ -61,6 +62,9 @@ class SecondActivity : AppCompatActivity() {
         registerBtn.setOnClickListener {
             key = Bus.register("testCmd") { event ->
                 Log.i(TAG, "当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess} ")
+                this.runOnUiThread{
+                    Toast.makeText(this,"当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess}",Toast.LENGTH_SHORT).show()
+                }
             }?.key!!
            Log.i(TAG,"key = $key")
         }

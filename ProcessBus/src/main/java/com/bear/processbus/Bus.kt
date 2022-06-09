@@ -11,6 +11,7 @@ import android.util.Log
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import java.lang.ref.WeakReference
 
 object Bus {
 
@@ -20,7 +21,8 @@ object Bus {
     private var eventSS: IEventBus? = null
     private var context: Context? = null
     private val tempNotPost = ArrayList<() -> Unit>() //发送事件时，service可能还未连接，暂时存在eventCallBack里面
-    private val tempNotRegister = HashMap<String, () -> Unit>() //注册监听时，service可能还未连接，暂时存在regisetCallBack里面
+    private val tempNotRegister = HashMap<String, WeakReference<() -> Unit>>() //注册监听时，service可能还未连接，暂时存在regisetCallBack里面
+    private val registed = HashMap<String, WeakReference<(Event) -> Unit>>() //已经注册的listener
 
     private val handler: Util.ProcessHandler by lazy {
         Util.getHandler(TAG)!!
@@ -80,24 +82,27 @@ object Bus {
         }
         val key = Util.getKey(context!!, cmd)
         handler.post {
+            registed[key] = WeakReference(block)
             if (eventSS != null) {
-                realRegister(cmd, key, block)
+                realRegister(cmd, key)
             } else {
-                tempNotRegister.put(key) {
-                    realRegister(cmd, key, block)
-                }
+                tempNotRegister.put(key, WeakReference {
+                    realRegister(cmd, key)
+                })
                 bindService()
             }
         }
         return Releasable(key)
     }
 
-    private fun realRegister(cmd: String, key: String, block: (Event) -> Unit) {
+    private fun realRegister(cmd: String, key: String) {
         Log.i(TAG, "register cmd:" + cmd)
         eventSS?.register(cmd, key, object : ICallBack.Stub() {
             override fun onReceived(event: Event?) {
                 if (event != null) {
-                    block(event)
+                    if (registed[key] != null && registed[key]!!.get() != null) {
+                        registed[key]?.get()!!(event)
+                    }
                 }
             }
         })
@@ -149,7 +154,9 @@ object Bus {
     private fun runCallBack() {
         if (tempNotRegister.size > 0) {
             tempNotRegister.forEach {
-                it.value()
+                if (it.value.get() != null) {
+                    it.value.get()!!()
+                }
             }
             tempNotRegister.clear()
         }

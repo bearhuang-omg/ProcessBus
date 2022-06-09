@@ -35,10 +35,11 @@ class ThirdActivity : AppCompatActivity() {
 //            Process.killProcess(Process.myPid())
         }
         connectBtnPost.setOnClickListener {
-            Bus.post(Event("testCmd", "thirdActivity发出来的消息"))
+            Bus.post(Event("testCmd2", "thirdActivity333333发出来的消息"))
+            Bus.post(Event("testCmd1", "thirdActivity11111发出来的消息"))
         }
         registerBtn.setOnClickListener {
-            Bus.register("testCmd") { event ->
+            Bus.register("testCmd2") { event ->
                 Log.i(
                     TAG,
                     "当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess} "
