@@ -63,7 +63,7 @@ class SecondActivity : AppCompatActivity() {
         }
 
         registerBtn.setOnClickListener {
-            Bus.register("testCmd1") { event ->
+            this.key = Bus.register("testCmd1") { event ->
                 Log.i(
                     TAG, "当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess} "
                 )
@@ -74,7 +74,7 @@ class SecondActivity : AppCompatActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-            }
+            }?.key!!
         }
     }
 

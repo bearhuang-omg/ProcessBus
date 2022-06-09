@@ -53,7 +53,13 @@ class MainService : Service() {
                 if (event != null && !event.cmd.isNullOrEmpty()) {
                     val processSet = cmdMap[event.cmd]
                     processSet?.forEach { processKey ->
-                        callbackMap[processKey]?.onReceived(event)
+                        try {
+                            callbackMap[processKey]?.onReceived(event)
+                        } catch (ex: Exception) {
+                            Log.e(TAG, "post error," + ex.toString())
+                            Log.i(TAG, "remove processKey:$processKey")
+                            callbackMap.remove(processKey)
+                        }
                     }
                 }
             }

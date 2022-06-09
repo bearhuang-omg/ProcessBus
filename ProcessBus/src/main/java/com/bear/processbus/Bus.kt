@@ -73,6 +73,7 @@ object Bus {
                 }
                 bindService()
             }
+            Log.i(TAG,"post event , cmd:${event.cmd},content:${event.content},fromProcess:${event.fromProcess}")
         }
     }
 
@@ -104,6 +105,7 @@ object Bus {
                 }
             }
             registedBlock[key] = block
+            Log.i(TAG, "register key:{$key},cmd:${cmd}")
         }
         return Releasable(key)
     }
@@ -138,6 +140,7 @@ object Bus {
     val bindCallBack = object : ICallBack.Stub() {
         override fun onReceived(event: Event?) {
             handler.post {
+                Log.i(TAG, "received event, cmd:${event?.cmd},content:${event?.content},fromProcess:${event?.fromProcess}")
                 if (event != null && !event.cmd.isNullOrEmpty()) {
                     registedCmd[event?.cmd]?.forEach { processKey ->
                         val block = registedBlock[processKey]
