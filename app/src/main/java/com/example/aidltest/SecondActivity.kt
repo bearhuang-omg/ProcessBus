@@ -1,12 +1,18 @@
 package com.example.aidltest
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.bear.processbus.*
+import com.bear.processbus.Bus
+import com.bear.processbus.Event
+import com.bear.processbus.Util
+
 
 class SecondActivity : AppCompatActivity() {
 
@@ -36,6 +42,10 @@ class SecondActivity : AppCompatActivity() {
         findViewById(R.id.testBtn_unregist)
     }
 
+    val testImg by lazy<ImageView> {
+        findViewById(R.id.image_two)
+    }
+
     var key = ""
 
 
@@ -55,8 +65,10 @@ class SecondActivity : AppCompatActivity() {
         postBtn.setOnClickListener {
 //            Bus.post(Event("testCmd1","新的内容"))
             Bus.post(Event("testCmd1","新的内容") {
+
                 "12345,上山大老虎".toByteArray()
             })
+
         }
 
         unregisterBtn.setOnClickListener {
@@ -70,8 +82,11 @@ class SecondActivity : AppCompatActivity() {
                 )
                 this.runOnUiThread{
                     if (event.getAttachment() != null){
-                        val content = String(event.getAttachment()!!.content)
-                        Toast.makeText(this,content,Toast.LENGTH_SHORT).show()
+                        val bitmap = byteToBitmap(event.getAttachment()!!.content)
+                        testImg.setImageBitmap(bitmap)
+                        Toast.makeText(this,"收到了图片",Toast.LENGTH_SHORT).show()
+//                        val content = String(event.getAttachment()!!.content)
+//                        Toast.makeText(this,content,Toast.LENGTH_SHORT).show()
                     }else{
                         Toast.makeText(this,"没有附件",Toast.LENGTH_SHORT).show()
                     }
@@ -79,6 +94,12 @@ class SecondActivity : AppCompatActivity() {
 
             }?.key!!
         }
+    }
+
+
+    fun byteToBitmap(byteArray: ByteArray):Bitmap {
+        val bitmap = BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
+        return bitmap
     }
 
 
