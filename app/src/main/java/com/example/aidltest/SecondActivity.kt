@@ -6,9 +6,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.bear.processbus.Bus
-import com.bear.processbus.Event
-import com.bear.processbus.Util
+import com.bear.processbus.*
 
 class SecondActivity : AppCompatActivity() {
 
@@ -55,7 +53,8 @@ class SecondActivity : AppCompatActivity() {
 //            Bus.init(this)
         }
         postBtn.setOnClickListener {
-            Bus.post(Event("testCmd1","新的内容"))
+//            Bus.post(Event("testCmd1","新的内容"))
+            Bus.post(Event("testCmd1","新的内容", Attachment("12345,上山打老虎".toByteArray())))
         }
 
         unregisterBtn.setOnClickListener {
@@ -67,13 +66,15 @@ class SecondActivity : AppCompatActivity() {
                 Log.i(
                     TAG, "当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess} "
                 )
-                this.runOnUiThread {
-                    Toast.makeText(
-                        this,
-                        "当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                this.runOnUiThread{
+                    if (event.getAttachment() != null){
+                        val content = String(event.getAttachment()?.content!!)
+                        Toast.makeText(this,content,Toast.LENGTH_SHORT).show()
+                    }else{
+                        Toast.makeText(this,"没有附件",Toast.LENGTH_SHORT).show()
+                    }
                 }
+
             }?.key!!
         }
     }
