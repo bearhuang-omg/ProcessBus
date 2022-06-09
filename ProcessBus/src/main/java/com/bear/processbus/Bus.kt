@@ -19,10 +19,11 @@ object Bus {
     private var eventSS: IEventBus? = null
     private var context: Context? = null
     private val tempNotPost = ArrayList<() -> Unit>() //发送事件时，service可能还未连接，暂时存在eventCallBack里面
-    private val tempNotRegister = HashMap<String, () -> Unit>() //注册监听时，service可能还未连接，暂时存在regisetCallBack里面
+    private val tempNotRegister =
+        HashMap<String, () -> Unit>() //注册监听时，service可能还未连接，暂时存在regisetCallBack里面
 
-    private val registedCmd = HashMap<String, HashSet<String>>() // 注册的事件和key，cmd->key
-    private val registedBlock = HashMap<String, (Event) -> Unit>()//注册的key和监听方法，key->block
+    private val registedCmd = HashMap<String, HashSet<String>>() // 注册的事件和key，cmd->observerKey
+    private val registedBlock = HashMap<String, (Event) -> Unit>()//注册的key和监听方法，observerKey->block
 
     private val INIT = 0 //初始状态
     private val CONNECTED = 1 //连接状态
@@ -33,7 +34,7 @@ object Bus {
         Util.getHandler(TAG)!!
     }
 
-    public fun init(context: Context) {
+    fun init(context: Context) {
         if (!isInit) {
             innerInit(context)
         }
@@ -73,7 +74,10 @@ object Bus {
                 }
                 bindService()
             }
-            Log.i(TAG,"post event , cmd:${event.cmd},content:${event.content},fromProcess:${event.fromProcess}")
+            Log.i(
+                TAG,
+                "post event , cmd:${event.cmd} , content:${event.content} , fromProcess:${event.fromProcess}"
+            )
         }
     }
 
@@ -86,13 +90,13 @@ object Bus {
         if (context == null) {
             return null
         }
-        val key = Util.getObserverKey(context!!, cmd)
+        val observerKey = Util.getObserverKey(context!!, cmd)
         handler.post {
             if (registedCmd.containsKey(cmd)) {
-                registedCmd[cmd]?.add(key)
+                registedCmd[cmd]?.add(observerKey)
             } else {
                 val set = HashSet<String>()
-                set.add(key)
+                set.add(observerKey)
                 registedCmd[cmd] = set
                 //registedCmd不存在才需要去service里面注册，否则只需要添加回调就可以了
                 if (eventSS != null) {
@@ -104,26 +108,35 @@ object Bus {
                     bindService()
                 }
             }
-            registedBlock[key] = block
-            Log.i(TAG, "register key:{$key},cmd:${cmd}")
+            registedBlock[observerKey] = block
+            Log.i(TAG, "register key:{$observerKey} , cmd:${cmd}")
         }
-        return Releasable(key)
+        return Releasable(observerKey)
     }
 
     //反注册
-    public fun unRegister(key: String) {
-        if (key.isEmpty()) {
+    fun unRegister(observerKey: String) {
+        if (observerKey.isEmpty()) {
             return
         }
-        Log.i(TAG, "unregister key:" + key)
+        Log.i(TAG, "unregister key:${observerKey}")
         innerInit()
         handler.post {
-            registedBlock.remove(key)
+            registedBlock.remove(observerKey)
+            registedCmd.forEach {
+                it.value.remove(observerKey)
+                if (it.value.isEmpty()) {
+                    val cmd = it.key
+                    val processKey = Util.getProcessKey(context)
+                    eventSS?.unRegister(processKey, cmd)
+                    registedCmd.remove(cmd)
+                }
+            }
         }
     }
 
     private fun bindService() {
-        if (eventSS != null) {
+        if (status == CONNECTED) {
             return
         }
         if (context == null) {
@@ -137,15 +150,26 @@ object Bus {
     }
 
     //进程的回调
-    val bindCallBack = object : ICallBack.Stub() {
+    private val bindCallBack = object : ICallBack.Stub() {
         override fun onReceived(event: Event?) {
             handler.post {
-                Log.i(TAG, "received event, cmd:${event?.cmd},content:${event?.content},fromProcess:${event?.fromProcess}")
+                Log.i(
+                    TAG,
+                    "received event, cmd:${event?.cmd} , content:${event?.content} , fromProcess:${event?.fromProcess}"
+                )
                 if (event != null && !event.cmd.isNullOrEmpty()) {
-                    registedCmd[event?.cmd]?.forEach { processKey ->
-                        val block = registedBlock[processKey]
+                    registedCmd[event?.cmd]?.forEach { observerKey ->
+                        val block = registedBlock[observerKey]
                         if (block != null) {
-                            block(event)
+                            try {
+                                block(event)
+                            } catch (ex: Exception) {
+                                ex.printStackTrace()
+                                Log.e(
+                                    TAG,
+                                    "block run error , observerkey: ${observerKey} , error:${ex}"
+                                )
+                            }
                         }
                     }
                 }
@@ -209,11 +233,11 @@ object Bus {
     //自动释放
     class Releasable(val key: String) {
 
-        public fun autoRelease(lifecycle: Lifecycle) {
+        fun autoRelease(lifecycle: Lifecycle) {
             lifecycle.addObserver(object : LifecycleEventObserver {
                 override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
                     if (event == Lifecycle.Event.ON_DESTROY) {
-                        Log.i(TAG, "release ${key},event onDeStroy")
+                        Log.i(TAG, "release ${key} , lifecycle onDeStroy")
                         unRegister(key)
                     }
                 }

@@ -17,6 +17,7 @@ class MainService : Service() {
     private val mBinder = object : IEventBus.Stub() {
 
         override fun bind(key: String?, callback: ICallBack?) {
+            Log.i(TAG, "bind key:${key}")
             handler.post {
                 if (!key.isNullOrEmpty() && callback != null) {
                     callbackMap[key] = callback
@@ -25,6 +26,7 @@ class MainService : Service() {
         }
 
         override fun register(key: String?, cmd: String?) {
+            Log.i(TAG, "register key:${key} , cmd:${cmd}")
             handler.post {
                 if (!key.isNullOrEmpty() && !cmd.isNullOrEmpty()) {
                     if (cmdMap.containsKey(cmd)) {
@@ -39,6 +41,7 @@ class MainService : Service() {
         }
 
         override fun unRegister(key: String?, cmd: String?) {
+            Log.i(TAG, "unregister cmd:${cmd} , key:${key}")
             handler.post {
                 if (!key.isNullOrEmpty() && !cmd.isNullOrEmpty()) {
                     if (cmdMap.containsKey(cmd)) {
@@ -56,8 +59,8 @@ class MainService : Service() {
                         try {
                             callbackMap[processKey]?.onReceived(event)
                         } catch (ex: Exception) {
-                            Log.e(TAG, "post error," + ex.toString())
-                            Log.i(TAG, "remove processKey:$processKey")
+                            Log.e(TAG, "post error:${ex}")
+                            Log.i(TAG, "remove processKey:${processKey}")
                             callbackMap.remove(processKey)
                         }
                     }

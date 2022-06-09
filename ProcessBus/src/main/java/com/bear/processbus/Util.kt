@@ -6,8 +6,6 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Process
 import android.util.Log
-import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -23,8 +21,9 @@ object Util {
         if (context == null) {
             return DEFAULT_PROCESS_NAME
         }
-        val pid = Process.myPid()
+
         try {
+            val pid = Process.myPid()
             var app = context!!.applicationContext
             if (app == null) {
                 app = context
@@ -108,28 +107,6 @@ object Util {
             return null
         }
         return ProcessHandler(tag)
-    }
-
-    fun md5(text: String): String {
-        try {
-            //获取md5加密对象
-            val instance: MessageDigest = MessageDigest.getInstance("MD5")
-            //对字符串加密，返回字节数组
-            val digest: ByteArray = instance.digest(text.toByteArray())
-            var sb = StringBuffer()
-            for (b in digest) {
-                var i: Int = b.toInt() and 0xff
-                var hexString = Integer.toHexString(i)
-                if (hexString.length < 2) {
-                    hexString = "0" + hexString
-                }
-                sb.append(hexString)
-            }
-            return sb.toString()
-        } catch (e: NoSuchAlgorithmException) {
-            e.printStackTrace()
-        }
-        return ""
     }
 
     var count:AtomicInteger = AtomicInteger(0)
