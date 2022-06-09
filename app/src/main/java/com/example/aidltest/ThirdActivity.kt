@@ -34,12 +34,9 @@ class ThirdActivity : AppCompatActivity() {
         }
         connectBtnPost.setOnClickListener {
             Bus.post(Event("testCmd2", "thirdActivity333333发出来的消息"))
-            Bus.post(Event("testCmd1","新的内容,thridActivity", object : IAttachment {
-                override fun getContent(): ByteArray {
-                    return "34567，abcde".toByteArray()
-                }
-
-            }))
+            Bus.post(Event("testCmd1","新的内容,thridActivity"){
+                "34567，abcde".toByteArray()
+            })
         }
         registerBtn.setOnClickListener {
             Bus.register("testCmd2") { event ->

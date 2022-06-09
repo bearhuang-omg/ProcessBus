@@ -12,7 +12,7 @@ class Event(
     var fromProcess = ""
     private var attachmentBinder: IBinder? = null
 
-    constructor(cmd: String, content: String, attachment: IAttachment) : this(cmd, content) {
+    constructor(cmd: String, content: String, attachment: () -> ByteArray) : this(cmd, content) {
         setAttachment(attachment)
     }
 
@@ -24,11 +24,11 @@ class Event(
         attachmentBinder = parcel.readStrongBinder()
     }
 
-    fun setAttachment(attachment: IAttachment) {
-        if (attachment != null) {
-            attachmentBinder = object : IAttachmentAIDL.Stub() {
+    fun setAttachment(block: () -> ByteArray) {
+        if (block != null) {
+            attachmentBinder = object : IAttachment.Stub() {
                 override fun getAttachment(): Attachment {
-                    return Attachment(attachment)
+                    return Attachment(block())
                 }
             }
         }
@@ -41,11 +41,11 @@ class Event(
         attachmentBinder = parcel.readStrongBinder()
     }
 
-    fun getAttachment(): IAttachment? {
+    fun getAttachment(): Attachment? {
         if (attachmentBinder == null) {
             return null
         }
-        return IAttachmentAIDL.Stub.asInterface(attachmentBinder).attachment
+        return IAttachment.Stub.asInterface(attachmentBinder).attachment
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
