@@ -16,15 +16,18 @@ object Bus {
 
     private val TAG = "ProcessBus"
     private var isInit = false
-    private var isConnected = false
     private var eventSS: IEventBus? = null
     private var context: Context? = null
     private val tempNotPost = ArrayList<() -> Unit>() //发送事件时，service可能还未连接，暂时存在eventCallBack里面
-    private val tempNotRegister =
-        HashMap<String, () -> Unit>() //注册监听时，service可能还未连接，暂时存在regisetCallBack里面
+    private val tempNotRegister = HashMap<String, () -> Unit>() //注册监听时，service可能还未连接，暂时存在regisetCallBack里面
 
     private val registedCmd = HashMap<String, HashSet<String>>() // 注册的事件和key，cmd->key
     private val registedBlock = HashMap<String, (Event) -> Unit>()//注册的key和监听方法，key->block
+
+    private val INIT = 0 //初始状态
+    private val CONNECTED = 1 //连接状态
+    private val DISCONNECTED = 2 //断开连接状态
+    private var status = INIT
 
     private val handler: Util.ProcessHandler by lazy {
         Util.getHandler(TAG)!!
@@ -151,15 +154,15 @@ object Bus {
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
             Log.i(TAG, "service connected")
-            isConnected = true
             eventSS = IEventBus.Stub.asInterface(p1)
             eventSS?.bind(Util.getProcessKey(context), bindCallBack)
             runCallBack()
+            status = CONNECTED
         }
 
         override fun onServiceDisconnected(p0: ComponentName?) {
             Log.i(TAG, "service disConnected")
-            isConnected = false
+            status = DISCONNECTED
             eventSS = null
         }
     }
@@ -176,6 +179,14 @@ object Bus {
                 it()
             }
             tempNotPost.clear()
+        }
+        //如果是断开重连的状态，则需要重新注册一下
+        if (status == DISCONNECTED) {
+            registedCmd.forEach {
+                val cmd = it.key
+                val processKey = Util.getProcessKey(context)
+                eventSS?.register(processKey, cmd)
+            }
         }
     }
 
