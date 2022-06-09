@@ -6,7 +6,8 @@ import com.bear.processbus.Event;
 
 interface IEventBus {
 
-    void register(String cmd,String key,ICallBack callback);
-    void unRegister(String key);
+    void bind(String key,ICallBack callback);//key是processName，callback为通信的通路
+    void register(String key,String cmd);
+    void unRegister(String key,String cmd);
     void post(in Event event);
 }

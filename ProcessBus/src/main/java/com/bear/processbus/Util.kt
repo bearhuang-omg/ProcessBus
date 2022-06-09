@@ -8,6 +8,7 @@ import android.os.Process
 import android.util.Log
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 object Util {
@@ -30,32 +31,54 @@ object Util {
             }
             val mActivityManager = app
                 .getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-            if (mActivityManager == null) {
-                currentProcessName = app.applicationInfo.packageName
-                return currentProcessName
-            }
-            val infoList = mActivityManager.runningAppProcesses
-            if (infoList == null) {
-                currentProcessName = app.applicationInfo.packageName
-                return currentProcessName
-            }
-            for (appProcess in mActivityManager
-                .runningAppProcesses) {
-                if (appProcess.pid == pid) {
-                    currentProcessName =
-                        if (appProcess.processName == null || appProcess.processName.isEmpty()) {
-                            app.applicationInfo.packageName
-                        } else {
-                            appProcess.processName
-                        }
-                    return currentProcessName
+            if (mActivityManager != null) {
+                for (appProcess in mActivityManager
+                    .runningAppProcesses) {
+                    if (appProcess.pid == pid) {
+                        currentProcessName =
+                            if (appProcess.processName == null || appProcess.processName.isEmpty()) {
+                                app.applicationInfo.packageName
+                            } else {
+                                appProcess.processName
+                            }
+                        break
+                    }
                 }
             }
-            currentProcessName = app.applicationInfo.packageName
-            return currentProcessName
+            if (!currentProcessName.isNullOrEmpty()) {
+                return currentProcessName
+            }
         } catch (e: Throwable) {
         }
         return DEFAULT_PROCESS_NAME
+    }
+
+    private var PROCESS_KEY = ""
+    fun getProcessKey(context: Context?): String {
+        if (PROCESS_KEY.isNotEmpty()) {
+            return PROCESS_KEY
+        }
+        if (context == null) {
+            PROCESS_KEY = getRandomString(16)
+            return PROCESS_KEY
+        }
+        var processKey = getProcessName(context)
+        if (processKey.equals(DEFAULT_PROCESS_NAME)) {
+            processKey = getRandomString(16)
+        }
+        PROCESS_KEY = processKey
+        return processKey
+    }
+
+    fun getRandomString(length: Int): String {
+        val str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        val random = Random()
+        val sb = StringBuilder()
+        for (i in 0 until length) {
+            val number = random.nextInt(62)
+            sb.append(str[number])
+        }
+        return sb.toString()
     }
 
     class ProcessHandler(tag: String) {
@@ -111,9 +134,9 @@ object Util {
 
     var count:AtomicInteger = AtomicInteger(0)
 
-    fun getKey(context: Context, cmd: String): String {
+    //获取每个监听者的key
+    fun getObserverKey(context: Context, cmd: String): String {
         val current = count.getAndIncrement()
-//        return md5(getProcessName(context) + current) + "_" + cmd
-        return getProcessName(context) + current + "_" + cmd
+        return getProcessKey(context) + current + "_" + cmd
     }
 }

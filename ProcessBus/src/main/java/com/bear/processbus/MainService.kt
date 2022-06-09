@@ -6,60 +6,54 @@ import android.os.IBinder
 import android.util.Log
 
 class MainService : Service() {
-
-    private val eventManager = HashMap<String, ArrayList<MainCallBack>>()
     private val TAG = "MainService"
     private val handler: Util.ProcessHandler by lazy {
         Util.getHandler(TAG)!!
     }
 
+    private val callbackMap = HashMap<String, ICallBack>() //每个进程的callback回调
+    private val cmdMap = HashMap<String, HashSet<String>>()//每个命令对应的进程
+
     private val mBinder = object : IEventBus.Stub() {
 
-        override fun register(cmd: String?, key: String?, callback: ICallBack?) {
-            if (!cmd.isNullOrEmpty() && callback != null && !key.isNullOrEmpty()) {
-                Log.i(TAG, "register $cmd")
-                handler.post {
-                    if (eventManager.contains(cmd)) {
-                        eventManager[cmd]?.add(MainCallBack(key,callback))
+        override fun bind(key: String?, callback: ICallBack?) {
+            handler.post {
+                if (!key.isNullOrEmpty() && callback != null) {
+                    callbackMap[key] = callback
+                }
+            }
+        }
+
+        override fun register(key: String?, cmd: String?) {
+            handler.post {
+                if (!key.isNullOrEmpty() && !cmd.isNullOrEmpty()) {
+                    if (cmdMap.containsKey(cmd)) {
+                        cmdMap[cmd]?.add(key)
                     } else {
-                        val list = ArrayList<MainCallBack>()
-                        list.add(MainCallBack(key,callback))
-                        eventManager[cmd] = list
+                        val list = HashSet<String>()
+                        list.add(key)
+                        cmdMap[cmd] = list
                     }
                 }
             }
         }
 
-        override fun unRegister(key: String?) {
-            Log.i(TAG, "unregister $key")
+        override fun unRegister(key: String?, cmd: String?) {
             handler.post {
-                if (!key.isNullOrEmpty()) {
-                    eventManager.forEach { entry ->
-                        entry.value.forEach { mainCallback ->
-                            if (mainCallback.key.equals(key)) {
-                                entry.value.remove(mainCallback)
-                            }
-                        }
+                if (!key.isNullOrEmpty() && !cmd.isNullOrEmpty()) {
+                    if (cmdMap.containsKey(cmd)) {
+                        cmdMap[cmd]?.remove(key)
                     }
                 }
             }
         }
 
         override fun post(event: Event?) {
-            if (event != null && !event.cmd.isNullOrEmpty()) {
-                handler.post {
-                    if (eventManager.contains(event.cmd) && eventManager[event.cmd] != null) {
-                        for (mainCallBack in eventManager[event.cmd]!!) {
-                            try {
-                                mainCallBack.callback.onReceived(event)
-                            } catch (ex: Exception) {
-                                ex.printStackTrace()
-                                eventManager[event.cmd]?.remove(mainCallBack)
-                                if (eventManager[event.cmd] != null && eventManager[event.cmd]!!.isEmpty()) {
-                                    eventManager.remove(event.cmd)
-                                }
-                            }
-                        }
+            handler.post {
+                if (event != null && !event.cmd.isNullOrEmpty()) {
+                    val processSet = cmdMap[event.cmd]
+                    processSet?.forEach { processKey ->
+                        callbackMap[processKey]?.onReceived(event)
                     }
                 }
             }
@@ -89,9 +83,8 @@ class MainService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.i(TAG, "main service destroyed")
-        eventManager.clear()
+        callbackMap.clear()
+        cmdMap.clear()
         handler.quitSafely()
     }
-
-    class MainCallBack(val key:String,val callback:ICallBack)
 }

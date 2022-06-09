@@ -40,6 +40,7 @@ class SecondActivity : AppCompatActivity() {
 
     var key = ""
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_second)
@@ -54,19 +55,26 @@ class SecondActivity : AppCompatActivity() {
 //            Bus.init(this)
         }
         postBtn.setOnClickListener {
-            Bus.post(Event("testCmd","新的内容"))
+            Bus.post(Event("testCmd1","新的内容"))
         }
+
         unregisterBtn.setOnClickListener {
             Bus.unRegister(key)
         }
+
         registerBtn.setOnClickListener {
-            key = Bus.register("testCmd") { event ->
-                Log.i(TAG, "当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess} ")
-                this.runOnUiThread{
-                    Toast.makeText(this,"当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess}",Toast.LENGTH_SHORT).show()
+            Bus.register("testCmd1") { event ->
+                Log.i(
+                    TAG, "当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess} "
+                )
+                this.runOnUiThread {
+                    Toast.makeText(
+                        this,
+                        "当前的进程${Util.getProcessName(this)},收到的event：${event.cmd},${event.content},${event.fromProcess}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
-            }?.key!!
-           Log.i(TAG,"key = $key")
+            }
         }
     }
 
