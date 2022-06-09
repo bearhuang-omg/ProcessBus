@@ -54,7 +54,11 @@ class SecondActivity : AppCompatActivity() {
         }
         postBtn.setOnClickListener {
 //            Bus.post(Event("testCmd1","新的内容"))
-            Bus.post(Event("testCmd1","新的内容", Attachment("12345,上山打老虎".toByteArray())))
+            Bus.post(Event("testCmd1","新的内容", object :IAttachment{
+                override fun getContent(): ByteArray {
+                    return "12345,上山大老虎".toByteArray()
+                }
+            }))
         }
 
         unregisterBtn.setOnClickListener {
@@ -68,7 +72,7 @@ class SecondActivity : AppCompatActivity() {
                 )
                 this.runOnUiThread{
                     if (event.getAttachment() != null){
-                        val content = String(event.getAttachment()?.content!!)
+                        val content = String(event.getAttachment()!!.getContent())
                         Toast.makeText(this,content,Toast.LENGTH_SHORT).show()
                     }else{
                         Toast.makeText(this,"没有附件",Toast.LENGTH_SHORT).show()

@@ -4,16 +4,21 @@ import android.os.Parcel
 import android.os.Parcelable
 
 //Event的附件，可用于传输大文件
-class Attachment(var content: ByteArray?):Parcelable {
-    constructor(parcel: Parcel) : this(parcel.createByteArray()) {
+internal class Attachment(var attachmentContent: ByteArray) : Parcelable, IAttachment {
+
+    constructor(attach: IAttachment) : this(attach.getContent()) {
+
+    }
+
+    constructor(parcel: Parcel) : this(parcel.createByteArray() ?: "".toByteArray()) {
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeByteArray(content)
+        parcel.writeByteArray(attachmentContent)
     }
 
     fun readFromParcel(source: Parcel) {
-        content = source.createByteArray()
+        attachmentContent = source.createByteArray() ?: "".toByteArray()
     }
 
     override fun describeContents(): Int {
@@ -28,5 +33,9 @@ class Attachment(var content: ByteArray?):Parcelable {
         override fun newArray(size: Int): Array<Attachment?> {
             return arrayOfNulls(size)
         }
+    }
+
+    override fun getContent(): ByteArray {
+        return attachmentContent
     }
 }

@@ -5,6 +5,6 @@ import android.os.Parcelable;
 parcelable Attachment;
 
 //event里面的附件
-interface IAttachment {
+interface IAttachmentAIDL {
     Attachment getAttachment();
 }
