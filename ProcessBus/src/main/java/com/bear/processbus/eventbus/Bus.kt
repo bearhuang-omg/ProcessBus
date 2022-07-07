@@ -1,4 +1,4 @@
-package com.bear.processbus
+package com.bear.processbus.eventbus
 
 import android.app.Application
 import android.app.Service
@@ -11,6 +11,8 @@ import android.util.Log
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import com.bear.processbus.MainService
+import com.bear.processbus.Util
 
 object Bus {
 
@@ -45,7 +47,7 @@ object Bus {
             synchronized(Bus::class.java) {
                 if (!isInit) {
                     if (context != null) {
-                        this.context = context
+                        Bus.context = context
                     } else {
                         getContext()
                     }
@@ -153,10 +155,7 @@ object Bus {
     private val bindCallBack = object : ICallBack.Stub() {
         override fun onReceived(event: Event?) {
             handler.post {
-                Log.i(
-                    TAG,
-                    "received event, cmd:${event?.cmd} , content:${event?.content} , fromProcess:${event?.fromProcess}"
-                )
+                Log.i(TAG, "received event, cmd:${event?.cmd} , content:${event?.content} , fromProcess:${event?.fromProcess}")
                 if (event != null && !event.cmd.isNullOrEmpty()) {
                     registedCmd[event?.cmd]?.forEach { observerKey ->
                         val block = registedBlock[observerKey]
@@ -165,10 +164,7 @@ object Bus {
                                 block(event)
                             } catch (ex: Exception) {
                                 ex.printStackTrace()
-                                Log.e(
-                                    TAG,
-                                    "block run error , observerkey: ${observerKey} , error:${ex}"
-                                )
+                                Log.e(TAG, "block run error , observerkey: ${observerKey} , error:${ex}")
                             }
                         }
                     }

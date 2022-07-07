@@ -1,4 +1,4 @@
-package com.bear.processbus
+package com.bear.processbus.eventbus
 
 import android.os.IBinder
 import android.os.Parcel

@@ -1,8 +1,8 @@
 // IEventBus.aidl
-package com.bear.processbus;
+package com.bear.processbus.eventbus;
 
-import com.bear.processbus.ICallBack;
-import com.bear.processbus.Event;
+import com.bear.processbus.eventbus.ICallBack;
+import com.bear.processbus.eventbus.Event;
 
 interface IEventBus {
 

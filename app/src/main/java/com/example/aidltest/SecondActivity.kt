@@ -9,8 +9,8 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.bear.processbus.Bus
-import com.bear.processbus.Event
+import com.bear.processbus.eventbus.Bus
+import com.bear.processbus.eventbus.Event
 import com.bear.processbus.Util
 
 

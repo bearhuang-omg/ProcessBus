@@ -4,6 +4,9 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
+import com.bear.processbus.eventbus.Event
+import com.bear.processbus.eventbus.ICallBack
+import com.bear.processbus.eventbus.IEventBus
 
 class MainService : Service() {
     private val TAG = "MainService"

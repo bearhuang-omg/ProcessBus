@@ -1,4 +1,4 @@
-package com.bear.processbus
+package com.bear.processbus.eventbus
 
 import android.os.Parcel
 import android.os.Parcelable
