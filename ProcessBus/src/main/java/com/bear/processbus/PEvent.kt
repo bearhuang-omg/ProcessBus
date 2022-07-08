@@ -6,7 +6,7 @@ import com.bear.processbus.eventbus.Event
 import com.bear.processbus.eventbus.ICallBack
 import com.bear.processbus.service.Constant
 
-class PEvent(val eventSS: IEventBus?, val context: Context?) {
+internal class PEvent(val eventSS: IEventBus?, val context: Context?) {
 
     val TAG = "PEvent"
     private val registedCmd = HashMap<String, HashSet<String>>() // 注册的事件和key，cmd->observerKey

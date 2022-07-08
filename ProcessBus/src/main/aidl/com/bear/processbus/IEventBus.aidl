@@ -3,8 +3,6 @@ package com.bear.processbus;
 
 import com.bear.processbus.eventbus.ICallBack;
 import com.bear.processbus.eventbus.Event;
-//import com.bear.processbus.service.Request;
-//import com.bear.processbus.service.Response;
 import com.bear.processbus.service.IService;
 
 interface IEventBus {

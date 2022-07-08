@@ -10,6 +10,8 @@ import android.util.Log
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import com.bear.processbus.api.EventApi
+import com.bear.processbus.api.ServiceApi
 import com.bear.processbus.eventbus.Event
 import com.bear.processbus.service.Constant
 import com.bear.processbus.service.IProcessService
@@ -20,7 +22,7 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-object Bus {
+object Bus : ServiceApi, EventApi {
 
     private val TAG = "ProcessBus"
     private var isInit = false
@@ -93,13 +95,13 @@ object Bus {
     }
 
 
-    public fun post(event: Event) {
+    override fun post(event: Event) {
         checkAndRun {
             processEvent?.post(event)
         }
     }
 
-    public fun register(cmd: String, block: (Event) -> Unit): Releasable? {
+    override fun register(cmd: String, block: (Event) -> Unit): Releasable? {
         init()
         if (context == null) {
             return null
@@ -111,25 +113,25 @@ object Bus {
         return Releasable(observerKey)
     }
 
-    fun unRegister(observerKey: String) {
+    override fun unRegister(observerKey: String) {
         checkAndRun {
             processEvent?.unRegister(observerKey)
         }
     }
 
-    fun registerService(service: IProcessService){
+    override fun registerService(service: IProcessService) {
         checkAndRun {
             processService?.registerService(service)
         }
     }
 
-    fun unRegisterService(serviceName: String){
+    override fun unRegisterService(serviceName: String) {
         checkAndRun {
             processService?.unRegisterService(serviceName)
         }
     }
 
-    suspend fun callService(request: Request): Response {
+    override suspend fun callService(request: Request): Response {
         return suspendCoroutine {
             checkAndRun {
                 if (processService == null) {

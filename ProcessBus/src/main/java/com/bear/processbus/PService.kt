@@ -2,7 +2,7 @@ package com.bear.processbus
 
 import com.bear.processbus.service.*
 
-class PService(val eventSS: IEventBus?) {
+internal class PService(val eventSS: IEventBus?) {
 
     fun registerService(service: IProcessService) {
         eventSS?.registerService(service.getServiceName(), object : IService.Stub() {

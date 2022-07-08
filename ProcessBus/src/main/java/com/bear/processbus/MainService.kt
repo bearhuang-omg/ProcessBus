@@ -11,7 +11,7 @@ import com.bear.processbus.service.IService
 import com.bear.processbus.service.Request
 import com.bear.processbus.service.Response
 
-class MainService : Service() {
+internal class MainService : Service() {
     private val TAG = "MainService"
     private val handler: Util.ProcessHandler by lazy {
         Util.getHandler(TAG)!!
