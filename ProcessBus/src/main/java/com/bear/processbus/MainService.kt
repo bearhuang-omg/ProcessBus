@@ -99,7 +99,10 @@ class MainService : Service() {
 
         override fun callService(request: Request?): Response {
             if (request!= null && !request.serviceName.isNullOrEmpty() && serviceMap.containsKey(request.serviceName)){
-                return serviceMap[request.serviceName]!!.call(request)
+                Log.i(TAG,"request serviceName:${ request.serviceName},params:${request.params}")
+                val response = serviceMap[request.serviceName]!!.call(request)
+                Log.i(TAG,"response : ${response.content}")
+                return response
             }
             return Response("cannot find the service", Constant.SERVICE_NOT_FOUND)
         }

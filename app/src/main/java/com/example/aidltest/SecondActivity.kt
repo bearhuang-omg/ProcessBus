@@ -12,6 +12,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.bear.processbus.Bus
 import com.bear.processbus.eventbus.Event
 import com.bear.processbus.Util
+import com.bear.processbus.service.Request
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 
 class SecondActivity : AppCompatActivity() {
@@ -46,6 +49,10 @@ class SecondActivity : AppCompatActivity() {
         findViewById(R.id.image_two)
     }
 
+    val callServiceBtn by lazy<Button> {
+        findViewById(R.id.testBtn_callService)
+    }
+
     var key = ""
 
 
@@ -54,6 +61,15 @@ class SecondActivity : AppCompatActivity() {
         setContentView(R.layout.activity_second)
         testBtn.setOnClickListener {
             this.finish()
+        }
+        callServiceBtn.setOnClickListener {
+            val request = Request("testService")
+            request.addParams("test","hehehe")
+            request.addParams("test1","hahaha")
+            GlobalScope.launch {
+                val response = Bus.callService(request)
+                Log.i(TAG,"response : ${response.content}")
+            }
         }
         jumpBtn.setOnClickListener {
             val intent = Intent(this,ThirdActivity::class.java)
