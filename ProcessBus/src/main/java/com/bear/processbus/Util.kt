@@ -1,6 +1,7 @@
 package com.bear.processbus
 
 import android.app.ActivityManager
+import android.app.Application
 import android.content.Context
 import android.os.Handler
 import android.os.HandlerThread
@@ -115,5 +116,15 @@ object Util {
     fun getObserverKey(context: Context, cmd: String): String {
         val current = count.getAndIncrement()
         return getProcessKey(context) + current + "_" + cmd
+    }
+
+    fun getContext(): Context? {
+        try {
+            return Class.forName("android.app.ActivityThread").getMethod("currentApplication")
+                .invoke(null) as Application
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        }
+        return null
     }
 }

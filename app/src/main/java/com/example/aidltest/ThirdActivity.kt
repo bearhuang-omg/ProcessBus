@@ -6,7 +6,8 @@ import android.util.Log
 import android.widget.Button
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
-import com.bear.processbus.eventbus.Bus
+//import com.bear.processbus.Bus
+import com.bear.processbus.Bus
 import com.bear.processbus.eventbus.Event
 import com.bear.processbus.Util
 import java.io.ByteArrayOutputStream

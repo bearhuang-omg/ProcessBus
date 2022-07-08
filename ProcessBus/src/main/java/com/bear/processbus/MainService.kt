@@ -6,7 +6,10 @@ import android.os.IBinder
 import android.util.Log
 import com.bear.processbus.eventbus.Event
 import com.bear.processbus.eventbus.ICallBack
-import com.bear.processbus.eventbus.IEventBus
+import com.bear.processbus.service.Constant
+import com.bear.processbus.service.IService
+import com.bear.processbus.service.Request
+import com.bear.processbus.service.Response
 
 class MainService : Service() {
     private val TAG = "MainService"
@@ -14,8 +17,12 @@ class MainService : Service() {
         Util.getHandler(TAG)!!
     }
 
+    //event
     private val callbackMap = HashMap<String, ICallBack>() //每个进程的callback回调
     private val cmdMap = HashMap<String, HashSet<String>>()//每个命令对应的进程
+
+    //service
+    private val serviceMap = HashMap<String,IService>() //进程注册的服务
 
     private val mBinder = object : IEventBus.Stub() {
 
@@ -70,6 +77,32 @@ class MainService : Service() {
                 }
             }
         }
+
+        override fun registerService(serviceName: String?, service: IService?) {
+            handler.post {
+                if (service != null && service != null){
+                    if (serviceMap.containsKey(serviceName)){
+                        Log.i(TAG,"already has ${serviceName}")
+                    }
+                    serviceMap[serviceName!!] = service
+                }
+            }
+        }
+
+        override fun unRegisterService(serviceName: String?) {
+            handler.post {
+                if (serviceName != null && serviceMap.containsKey(serviceName)){
+                    serviceMap.remove(serviceName)
+                }
+            }
+        }
+
+        override fun callService(request: Request?): Response {
+            if (request!= null && !request.serviceName.isNullOrEmpty() && serviceMap.containsKey(request.serviceName)){
+                return serviceMap[request.serviceName]!!.call(request)
+            }
+            return Response("cannot find the service", Constant.SERVICE_NOT_FOUND)
+        }
     }
 
     override fun onBind(p0: Intent?): IBinder? {
@@ -97,6 +130,7 @@ class MainService : Service() {
         Log.i(TAG, "main service destroyed")
         callbackMap.clear()
         cmdMap.clear()
+        serviceMap.clear()
         handler.quitSafely()
     }
 }

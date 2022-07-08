@@ -9,7 +9,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.bear.processbus.eventbus.Bus
+import com.bear.processbus.Bus
 import com.bear.processbus.eventbus.Event
 import com.bear.processbus.Util
 
@@ -63,11 +63,11 @@ class SecondActivity : AppCompatActivity() {
 //            Bus.init(this)
         }
         postBtn.setOnClickListener {
-//            Bus.post(Event("testCmd1","新的内容"))
-            Bus.post(Event("testCmd1","新的内容") {
-
-                "12345,上山大老虎".toByteArray()
-            })
+            Bus.post(Event("testCmd1","新的内容"))
+//            ProcessBus.post(Event("testCmd1","新的内容") {
+//
+//                "12345,上山大老虎".toByteArray()
+//            })
 
         }
 
